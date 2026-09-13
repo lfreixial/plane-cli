@@ -1,6 +1,60 @@
+# Build and release output
 /bin/
 /dist/
-/coverage.out
+/plane
+/plane.exe
+/*.exe
+/*.dll
+/*.so
+/*.dylib
+/plane-cli_*.tar.gz
+/plane-cli_*.zip
+/checksums.txt
 *.test
+
+# Test coverage, profiling, and traces
+/coverage/
+coverage.out
+coverage-*.out
+coverage.html
+*.coverprofile
+*.prof
+*.pprof
+trace.out
+
+# Local Go workspace files (keep go.mod and go.sum tracked)
+/go.work
+/go.work.sum
+
+# Local credentials and configuration; keep examples and test fixtures trackable
 .env
-config.json
+.env.*
+!.env.example
+!.env.*.example
+!.env.sample
+!.env.template
+/config.json
+/config.local.json
+/.plane-cli/
+
+# Local caches and logs
+/.cache/
+/tmp/
+/*.log
+
+# Editor files; allow shared VS Code configuration
+/.idea/
+/.vscode/*
+!/.vscode/extensions.json
+!/.vscode/settings.json
+!/.vscode/tasks.json
+!/.vscode/launch.json
+*.swp
+*.swo
+*~
+
+# OS metadata
+.DS_Store
+._*
+Thumbs.db
+Desktop.ini

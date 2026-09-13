@@ -48,7 +48,7 @@ changelog:
       - '^Merge '
 
 release:
-  name_template: 'Plane CLI {{ .Tag }}'
+  name_template: '{{ .Tag }}'
   prerelease: auto
   mode: keep-existing
   header: |

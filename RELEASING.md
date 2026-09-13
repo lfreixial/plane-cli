@@ -20,8 +20,13 @@ other hosted service is deployed by this repository.
 
 ## Cut a release
 
+`main` requires a pull request, all five CI checks, an up-to-date branch, and
+resolved review conversations. These requirements apply to administrators too;
+force pushes and branch deletion are blocked. Review approvals are optional so
+maintainers can merge their own pull requests after the checks pass.
+
 1. Merge the intended changes into `main` and wait for CI to pass.
-2. Update `CHANGELOG.md` with the release's changes and commit it.
+2. Update `CHANGELOG.md` with the release's changes through a pull request.
 3. Optionally test packaging locally using GoReleaser v2.18.1:
 
    ```sh
@@ -46,7 +51,8 @@ other hosted service is deployed by this repository.
    platform, verify its checksum, and run `plane --version`.
 
 Tags such as `v0.2.0-rc.1` become prereleases. Plain version tags become stable
-releases. Release notes include the CLI summary and a generated commit changelog.
+releases. The release title is the tag itself, such as `v0.2.0`. Release notes
+include the CLI summary and a generated commit changelog.
 
 ## Retry a failed release
 
