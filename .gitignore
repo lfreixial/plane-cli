@@ -1,6 +1,7 @@
 # Build and release output
 /bin/
 /dist/
+/third_party/licenses/
 /plane
 /plane.exe
 /*.exe
