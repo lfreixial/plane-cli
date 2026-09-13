@@ -48,6 +48,13 @@ go build -o bin/plane ./cmd/plane
 go install ./cmd/plane
 ```
 
+`make build` and `make install` derive the version from Git: a clean `v0.1.0`
+checkout reports `0.1.0`, later commits include their distance and commit hash
+(for example, `0.1.0-1-g1133129`), and uncommitted changes add `-dirty`. Without
+Git metadata, the version falls back to `dev`. Set `VERSION` explicitly when
+building from a source archive, for example `make install VERSION=0.1.0`.
+The plain `go build` and `go install` commands above use the default `dev` label.
+
 `go install` writes to `GOBIN`, or `$(go env GOPATH)/bin` by default. The commands below assume `plane` is on your PATH; you can also run `./bin/plane`.
 
 ## Connect to Plane
@@ -81,7 +88,9 @@ Use the instance origin, not its workspace page URL. An API base ending in `/api
 
 ```sh
 plane project list
+plane project use           # choose from an interactive project picker
 plane project use ENG
+plane project view          # view the currently selected project
 
 plane issue list
 plane issue list --state 'In Progress' --assignee alice@example.com
@@ -106,6 +115,7 @@ plane issue delete ENG-42 --yes
 
 - Work items accept keys such as `ENG-42` or UUIDs. UUIDs require a selected project; keys resolve their own project.
 - Projects accept identifiers, exact names, or UUIDs. States, labels, cycles, and modules accept exact names or UUIDs. Matching is case-insensitive; ambiguous names require a UUID.
+- `project view` uses the selected project when no reference is supplied. `project use` without a reference opens a searchable picker; use an explicit reference in scripts or with `--plain`/`--json`.
 - Members accept display names, emails, or user UUIDs. `member list` shows the available IDs.
 - `--assignee` and `--label` accept comma-separated or repeated values. Editing them replaces the whole list; `none` clears it.
 - `--body` and `--body-file` accept plain text, safely converted to HTML. `--body-file -` reads stdin. An empty `--body=''` clears a description.
