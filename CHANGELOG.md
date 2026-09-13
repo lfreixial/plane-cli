@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Fix cycle creation on Plane deployments requiring `project_id` in the request body.
+
+## 0.1.2 — 2026-09-14
+
 - Include third-party license notices in release archives.
 - Update dependencies to address GO-2026-5024 and GO-2026-5970; the affected
   functions were not found reachable by the CLI vulnerability scan.
