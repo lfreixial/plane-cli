@@ -4,6 +4,7 @@ project_name: plane-cli
 before:
   hooks:
     - go mod download
+    - bash scripts/licenses.sh
 
 builds:
   - id: plane
@@ -34,6 +35,10 @@ archives:
       - LICENSE
       - README.md
       - CHANGELOG.md
+      - CONTRIBUTING.md
+      - SECURITY.md
+      - RELEASING.md
+      - third_party/**
 
 checksum:
   name_template: checksums.txt

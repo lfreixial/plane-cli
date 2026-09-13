@@ -1,5 +1,20 @@
 # Changelog
 
+## Unreleased
+
+- Include third-party license notices in release archives.
+- Update dependencies to address GO-2026-5024 and GO-2026-5970; the affected
+  functions were not found reachable by the CLI vulnerability scan.
+- Add automated vulnerability checks and contributor/security guidance.
+- Refresh installation and shell completion instructions.
+
+## 0.1.1 — 2026-09-13
+
+- Derive the version from Git tags when building or installing with Make.
+- View the selected project with `plane project view`.
+- Select a default project interactively with `plane project use`.
+- Simplify release titles to the version tag and improve ignore rules.
+
 ## 0.1.0 — 2026-09-13
 
 Initial release of Plane CLI, a Go client for Plane Cloud and self-hosted Plane.

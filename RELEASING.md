@@ -9,6 +9,8 @@ other hosted service is deployed by this repository.
   dependency consistency, vet, race tests, executable startup, shell completion,
   workflow syntax, and GoReleaser configuration. Tests run on Linux (the minimum
   Go version and current stable Go), macOS, and Windows.
+- **Security** scans dependencies for all six release targets during CI and
+  weekly. License collection also runs in CI and before packaging releases.
 - **Release** runs when a version tag is pushed. It reuses CI to validate the
   tagged commit, then builds and publishes the archives and checksums. Only the
   publishing job receives `contents: write`; it uses GitHub's automatic
@@ -19,6 +21,12 @@ other hosted service is deployed by this repository.
   workflows and should be updated in both places together.
 
 ## Cut a release
+
+Before the first public release, enable GitHub private vulnerability reporting
+and verify the report link in `SECURITY.md`. Check the repository description,
+secret scanning/push protection settings, and public release downloads.
+Require approval for workflows from external contributors in Actions settings.
+Run the live smoke checks in `CONTRIBUTING.md` and record the Plane version tested.
 
 `main` requires a pull request, all five CI checks, an up-to-date branch, and
 resolved review conversations. These requirements apply to administrators too;
@@ -75,7 +83,9 @@ needs a code fix, publish a new patch version; do not move a published tag.
 | macOS (`darwin`) | amd64, arm64 | `.tar.gz` |
 | Windows | amd64, arm64 | `.zip` |
 
-Archives contain `plane` (or `plane.exe`), the license, README, and changelog.
+Archives contain `plane` (or `plane.exe`), the license, README, changelog, and
+`third_party/` license notices generated for all six build targets. Packaging
+fails if the license collector encounters an unreviewed unknown license.
 The version is embedded in the executable during the build. Binaries are built
 with CGO disabled. macOS binaries are not signed or notarized.
 

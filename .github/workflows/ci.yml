@@ -9,6 +9,9 @@ permissions:
   contents: read
 
 jobs:
+  security:
+    uses: ./.github/workflows/security.yml
+
   test:
     name: Test (${{ matrix.os }}, Go ${{ matrix.go }})
     runs-on: ${{ matrix.os }}
@@ -73,6 +76,8 @@ jobs:
           cache: true
       - name: Lint GitHub Actions
         run: go run github.com/rhysd/actionlint/cmd/actionlint@v1.7.12
+      - name: Collect dependency license notices
+        run: bash scripts/licenses.sh
       - name: Validate GoReleaser configuration
         uses: goreleaser/goreleaser-action@f06c13b6b1a9625abc9e6e439d9c05a8f2190e94 # v7.2.3
         with:

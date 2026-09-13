@@ -4,6 +4,9 @@ A Go command-line client for [Plane](https://github.com/makeplane/plane). The ex
 
 Browse work items in an interactive terminal, create and update them from commands, and use JSON output in scripts. Supports Plane Cloud and self-hosted instances with the public v1 API.
 
+This is an independent, early-stage community client, not an official Plane product.
+Live compatibility varies by Plane deployment; see [scope](#scope-and-api-references).
+
 ## Install
 
 Download prebuilt binaries from [GitHub Releases](https://github.com/lfreixial/plane-cli/releases/latest).
@@ -11,16 +14,16 @@ Linux and macOS archives use `.tar.gz`; Windows archives use `.zip`. Choose
 `amd64` for Intel/AMD or `arm64` for ARM, including Apple Silicon. Each release
 includes `checksums.txt` for verification. Go is not needed to run these binaries.
 
-For example, on Linux amd64 with authenticated GitHub CLI access:
+For example, on Linux amd64 using GitHub CLI:
 
 ```sh
 mkdir -p /tmp/plane-cli-install
-gh release download v0.1.0 --repo lfreixial/plane-cli \
-  --pattern 'plane-cli_0.1.0_linux_amd64.tar.gz' \
+gh release download v0.1.1 --repo lfreixial/plane-cli \
+  --pattern 'plane-cli_0.1.1_linux_amd64.tar.gz' \
   --pattern checksums.txt --dir /tmp/plane-cli-install
 cd /tmp/plane-cli-install
 sha256sum --ignore-missing --check checksums.txt
-tar -xzf plane-cli_0.1.0_linux_amd64.tar.gz
+tar -xzf plane-cli_0.1.1_linux_amd64.tar.gz
 install -d "$HOME/.local/bin"
 install -m755 plane "$HOME/.local/bin/plane"
 plane --version
@@ -31,9 +34,11 @@ authenticated access. macOS binaries are not signed or notarized.
 
 ### Build from source
 
-Requires Go 1.25 or newer. Run these commands from the repository folder.
+Requires Go 1.25 or newer and Git. On Linux or macOS:
 
 ```sh
+git clone https://github.com/lfreixial/plane-cli.git
+cd plane-cli
 make build
 ./bin/plane --help
 
@@ -41,7 +46,7 @@ make build
 make install
 ```
 
-Without Make:
+Without Make (also suitable for Windows, from the cloned repository):
 
 ```sh
 go build -o bin/plane ./cmd/plane
@@ -207,6 +212,11 @@ plane completion fish | source
 
 PowerShell completion is also available through `plane completion powershell`.
 
+`plane completion zsh` prints the completion script. `source <(plane completion zsh)`
+loads it into the current Zsh session; it normally prints nothing. For future
+sessions, add that line to `~/.zshrc` after your completion initialization
+(`autoload -Uz compinit; compinit`, or your shell framework's setup).
+
 ## Development
 
 ```sh
@@ -221,6 +231,9 @@ See [RELEASING.md](RELEASING.md) for the tag-triggered release workflow,
 local packaging checks, and release retry instructions. Dependabot opens weekly
 dependency and Actions updates.
 
+See [CONTRIBUTING.md](CONTRIBUTING.md) for contributing and reporting bugs,
+and [SECURITY.md](SECURITY.md) for reporting vulnerabilities privately.
+
 Tests cover API request formats, cursor pagination, rate limits, timeouts, redirect handling, reference resolution, field clearing, confirmation, configuration precedence, and browser navigation. A live Plane instance is not required by the tests; live compatibility still needs verification against your deployment.
 
 ## Scope and API references
@@ -231,4 +244,6 @@ The implementation follows the [Plane API introduction](https://developers.plane
 
 Work item API calls use `/work-items/`, replacing the deprecated `/issues/` API paths. Cycle and module memberships retain their documented `/cycle-issues/` and `/module-issues/` paths and `issues` payload field. Browser URLs follow Plane's separate web routes.
 
-MIT licensed. No Plane server source is bundled.
+MIT licensed; see [LICENSE](LICENSE). Dependency notices are collected under
+[third_party](third_party/README.md) and included in new release archives.
+No Plane server source is bundled.
