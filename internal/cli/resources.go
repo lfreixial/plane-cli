@@ -5,7 +5,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/lfreixial/plane-cli/internal/config"
 	"github.com/spf13/cobra"
 )
 
@@ -52,12 +51,23 @@ func (a *app) resourceCmd(kind string) *cobra.Command {
 	}}
 	l.Flags().IntVar(&limit, "limit", 100, "Maximum results (0 for all)")
 	r.AddCommand(l)
-	r.AddCommand(&cobra.Command{Use: "view REF", Short: "View a " + kind, Args: cobra.ExactArgs(1), RunE: func(cmd *cobra.Command, args []string) error {
+	viewUse, viewArgs := "view REF", cobra.ExactArgs(1)
+	if kind == "project" {
+		viewUse, viewArgs = "view [REF]", cobra.MaximumNArgs(1)
+	}
+	r.AddCommand(&cobra.Command{Use: viewUse, Short: "View a " + kind, Args: viewArgs, RunE: func(cmd *cobra.Command, args []string) error {
+		ref := a.cfg.Project
+		if len(args) > 0 {
+			ref = args[0]
+		}
+		if ref == "" {
+			return fmt.Errorf("no project selected: run 'plane project use' or 'plane project view KEY'")
+		}
 		path, err := a.resourcePath(cmd, kind)
 		if err != nil {
 			return err
 		}
-		id, err := a.resolve(cmd, path, args[0], kind)
+		id, err := a.resolve(cmd, path, ref, kind)
 		if err != nil {
 			return err
 		}
@@ -85,28 +95,7 @@ func (a *app) resourceCmd(kind string) *cobra.Command {
 		return a.result(cmd, "DELETE", path+id+"/", nil)
 	}})
 	if kind == "project" {
-		r.AddCommand(&cobra.Command{Use: "use REF", Short: "Save the default project", Args: cobra.ExactArgs(1), RunE: func(cmd *cobra.Command, args []string) error {
-			if err := a.connect(); err != nil {
-				return err
-			}
-			id, err := a.resolve(cmd, a.ws()+"projects/", args[0], "project")
-			if err != nil {
-				return err
-			}
-			c := a.stored
-			c.BaseURL = a.cfg.BaseURL
-			c.WebURL = a.cfg.WebURL
-			c.Workspace = a.cfg.Workspace
-			c.Project = id
-			if err := config.Save(a.path, c); err != nil {
-				return err
-			}
-			if a.json {
-				return a.writeJSON(map[string]string{"project": id})
-			}
-			fmt.Fprintf(a.out, "Default project: %s (%s)\n", Safe(args[0]), id)
-			return nil
-		}})
+		r.AddCommand(a.projectUseCmd())
 	}
 	if kind == "cycle" || kind == "module" {
 		a.membershipCommands(r, kind)

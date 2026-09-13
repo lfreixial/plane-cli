@@ -1,4 +1,4 @@
-VERSION ?= dev
+VERSION ?= $(patsubst v%,%,$(shell git describe --tags --match 'v[0-9]*' --always --dirty 2>/dev/null || echo dev))
 PREFIX ?= $(HOME)/.local
 
 .PHONY: build install test vet fmt
