@@ -1,0 +1,67 @@
+version: 2
+project_name: plane-cli
+
+before:
+  hooks:
+    - go mod download
+
+builds:
+  - id: plane
+    main: ./cmd/plane
+    binary: plane
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+      - windows
+    goarch:
+      - amd64
+      - arm64
+    flags:
+      - -trimpath
+    ldflags:
+      - -s -w -X main.version={{ .Version }}
+
+archives:
+  - id: binaries
+    formats: [tar.gz]
+    name_template: '{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}'
+    format_overrides:
+      - goos: windows
+        formats: [zip]
+    files:
+      - LICENSE
+      - README.md
+      - CHANGELOG.md
+
+checksum:
+  name_template: checksums.txt
+  algorithm: sha256
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - '^test:'
+      - '^chore:'
+      - '^Merge '
+
+release:
+  name_template: 'Plane CLI {{ .Tag }}'
+  prerelease: auto
+  mode: keep-existing
+  header: |
+    A Go command-line client for Plane Cloud and self-hosted Plane.
+
+    - Interactive work item browser and terminal-based issue management.
+    - Create, edit, move, assign, and comment on work items.
+    - Manage projects, states, labels, cycles, and modules.
+    - JSON output, environment-based configuration, and shell completion.
+
+    Download the archive for your OS and architecture, verify it using
+    `checksums.txt`, and extract `plane` (`plane.exe` on Windows).
+    Run `plane init` to connect to your workspace.
+
+    `amd64` is for Intel/AMD 64-bit systems; `arm64` is for ARM 64-bit systems,
+    including Apple Silicon. macOS binaries are not signed or notarized.
