@@ -382,7 +382,7 @@ func TestResourceCreatePayloads(t *testing.T) {
 		{"project", "/api/v1/workspaces/team/projects/", []string{"--identifier", "eng"}, map[string]any{"name": "Example", "identifier": "ENG"}},
 		{"state", projectPath + "states/", nil, map[string]any{"name": "Example", "group": "backlog", "color": "#60646C"}},
 		{"label", projectPath + "labels/", []string{"--color", "#FF0000"}, map[string]any{"name": "Example", "color": "#FF0000"}},
-		{"cycle", projectPath + "cycles/", []string{"--start", "2026-10-01", "--end", "2026-10-14"}, map[string]any{"name": "Example", "start_date": "2026-10-01", "end_date": "2026-10-14"}},
+		{"cycle", projectPath + "cycles/", []string{"--start", "2026-10-01", "--end", "2026-10-14"}, map[string]any{"name": "Example", "project_id": projectID, "start_date": "2026-10-01", "end_date": "2026-10-14"}},
 		{"module", projectPath + "modules/", []string{"--target", "2026-10-31", "--status", "planned"}, map[string]any{"name": "Example", "target_date": "2026-10-31", "status": "planned"}},
 	} {
 		t.Run(tc.kind, func(t *testing.T) {
@@ -402,6 +402,44 @@ func TestResourceCreatePayloads(t *testing.T) {
 			}
 			if !reflect.DeepEqual(got, tc.want) {
 				t.Fatalf("payload=%#v want=%#v", got, tc.want)
+			}
+		})
+	}
+}
+
+func TestCycleCreateIncludesResolvedProjectID(t *testing.T) {
+	for _, ref := range []string{"ENG", "Engineering", projectID} {
+		t.Run(ref, func(t *testing.T) {
+			created := false
+			serverEnv(t, func(w http.ResponseWriter, r *http.Request) {
+				switch {
+				case r.Method == "GET" && r.URL.Path == "/api/v1/workspaces/team/projects/":
+					fmt.Fprintf(w, `[{"id":%q,"identifier":"ENG","name":"Engineering"}]`, projectID)
+				case r.Method == "POST" && r.URL.Path == projectPath+"cycles/":
+					var body map[string]any
+					if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+						t.Error(err)
+					}
+					// Plane validates project_id in the body even though it is in the URL.
+					if body["project_id"] != projectID {
+						w.WriteHeader(http.StatusBadRequest)
+						fmt.Fprint(w, `{"non_field_errors":["Project ID is required"]}`)
+						return
+					}
+					created = true
+					w.WriteHeader(http.StatusCreated)
+					fmt.Fprintf(w, `{"id":%q,"name":"Smoke Cycle","project":%q}`, cycleID, projectID)
+				default:
+					t.Errorf("unexpected %s %s", r.Method, r.URL.Path)
+					http.NotFound(w, r)
+				}
+			})
+			t.Setenv("PLANE_PROJECT", otherProjectID)
+			if _, err := invoke(t, "", "-p", ref, "cycle", "create", "--name", "Smoke Cycle", "--json"); err != nil {
+				t.Fatal(err)
+			}
+			if !created {
+				t.Fatal("cycle was not created")
 			}
 		})
 	}
