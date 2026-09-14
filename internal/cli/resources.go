@@ -172,9 +172,21 @@ func (a *app) resourceWrite(kind string, edit bool) *cobra.Command {
 		if len(payload) == 0 {
 			return fmt.Errorf("supply at least one field to edit")
 		}
-		path, err := a.resourcePath(cmd, kind)
-		if err != nil {
-			return err
+		var path string
+		if kind == "cycle" && !edit {
+			project, err := a.projectID(cmd)
+			if err != nil {
+				return err
+			}
+			// Plane's cycle creation validator reads project_id from the body.
+			payload["project_id"] = project
+			path = a.pp(project) + "cycles/"
+		} else {
+			var err error
+			path, err = a.resourcePath(cmd, kind)
+			if err != nil {
+				return err
+			}
 		}
 		method := "POST"
 		if edit {
