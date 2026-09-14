@@ -8,6 +8,11 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  # Keep this distinct from the caller's release concurrency group.
+  group: ci-${{ github.workflow }}-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' || (github.event_name == 'push' && github.ref == 'refs/heads/main') }}
+
 jobs:
   security:
     uses: ./.github/workflows/security.yml
@@ -17,56 +22,60 @@ jobs:
     runs-on: ${{ matrix.os }}
     timeout-minutes: 15
     strategy:
-      fail-fast: false
+      fail-fast: true
       matrix:
         include:
           - os: ubuntu-latest
             go: 1.25.x
           - os: ubuntu-latest
             go: stable
-          - os: macos-latest
-            go: stable
-          - os: windows-latest
-            go: stable
-    defaults:
-      run:
-        shell: bash
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+      - uses: ./.github/actions/test
         with:
           go-version: ${{ matrix.go }}
-          cache: true
-      - name: Check formatting
-        run: |
-          unformatted=$(gofmt -l cmd internal)
-          if [[ -n "$unformatted" ]]; then
-            echo 'Run gofmt on these files:' >&2
-            printf '%s\n' "$unformatted" >&2
-            exit 1
-          fi
-      - name: Verify dependencies
-        run: |
-          go mod verify
-          go mod tidy
-          git diff --exit-code -- go.mod go.sum
-      - run: go vet ./...
-      - run: go test -race -cover ./...
-      - name: Build and smoke test
-        run: |
-          go build -trimpath -o bin/ ./cmd/plane
-          ./bin/plane --version
-          ./bin/plane --help
-          ./bin/plane completion bash > /tmp/plane-completion.bash
-          bash -n /tmp/plane-completion.bash
+
+  test-windows:
+    name: Test (windows-latest, Go stable)
+    needs: [test, security, release-check]
+    runs-on: windows-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/test
+        with:
+          go-version: stable
+
+  test-macos:
+    name: Test (macos-latest, Go stable)
+    needs: test-windows
+    runs-on: macos-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/test
+        with:
+          go-version: stable
 
   release-check:
     name: Validate workflows and release configuration
+    # This existing required check must fail if security fails: skipped
+    # Windows/macOS checks alone would not block merging a pull request.
+    needs: security
+    if: ${{ !cancelled() }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
+      - name: Require successful security checks
+        env:
+          SECURITY_RESULT: ${{ needs.security.result }}
+        run: test "$SECURITY_RESULT" = success
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false

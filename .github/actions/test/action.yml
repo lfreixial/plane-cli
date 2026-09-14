@@ -1,0 +1,44 @@
+name: Test Go CLI
+description: Verify, test, build, and smoke test the CLI on the current runner.
+
+inputs:
+  go-version:
+    description: Go version to test.
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+      with:
+        go-version: ${{ inputs.go-version }}
+        cache: true
+    - name: Check formatting
+      shell: bash
+      run: |
+        unformatted=$(gofmt -l cmd internal)
+        if [[ -n "$unformatted" ]]; then
+          echo 'Run gofmt on these files:' >&2
+          printf '%s\n' "$unformatted" >&2
+          exit 1
+        fi
+    - name: Verify dependencies
+      shell: bash
+      run: |
+        go mod verify
+        go mod tidy
+        git diff --exit-code -- go.mod go.sum
+    - name: Vet
+      shell: bash
+      run: go vet ./...
+    - name: Race tests and coverage
+      shell: bash
+      run: go test -race -cover ./...
+    - name: Build and smoke test
+      shell: bash
+      run: |
+        go build -trimpath -o bin/ ./cmd/plane
+        ./bin/plane --version
+        ./bin/plane --help
+        ./bin/plane completion bash > /tmp/plane-completion.bash
+        bash -n /tmp/plane-completion.bash
