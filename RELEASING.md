@@ -8,7 +8,13 @@ other hosted service is deployed by this repository.
 - **CI** runs for pull requests and pushes to `main`. It checks formatting,
   dependency consistency, vet, race tests, executable startup, shell completion,
   workflow syntax, and GoReleaser configuration. Tests run on Linux (the minimum
-  Go version and current stable Go), macOS, and Windows.
+  Go version and current stable Go), then Windows, then macOS. Windows starts
+  only after both Linux test jobs, security scans, and release validation pass;
+  macOS starts only after Windows passes. All platforms use the same checks in
+  `.github/actions/test`. Superseded pull request and `main` CI runs are cancelled,
+  and test/security matrices stop on the first failure. Release checks are not
+  cancelled by newer CI runs. Successful runs take longer because platform tests
+  run in sequence, but failures avoid starting the more expensive runners.
 - **Security** scans dependencies for all six release targets during CI and
   weekly. License collection also runs in CI and before packaging releases.
 - **Release** runs when a version tag is pushed. It reuses CI to validate the
